@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Commission Calculator - Errimat Industries Ltd</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 420px;
+    }
+    h2 {
+      text-align: center;
+      color: #004080;
+    }
+    label {
+      font-weight: 600;
+      margin-top: 10px;
+      display: block;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #004080;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #002b5c;
+    }
+    .receipt {
+      margin-top: 20px;
+      border: 1px dashed #004080;
+      padding: 15px;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .receipt h3 {
+      text-align: center;
+      color: #004080;
+    }
+    .receipt p {
+      margin: 5px 0;
+    }
+    .print-btn {
+      background: #008000;
+      margin-top: 10px;
+    }
+    .print-btn:hover {
+      background: #006400;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .receipt, .receipt * {
+        visibility: visible;
+      }
+      .receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Errimat Industries Ltd</h2>
+  <label>Name:</label>
+  <input type="text" id="name">
+
+  <label>Department:</label>
+  <input type="text" id="department">
+
+  <label>Month:</label>
+  <select id="month">
+    <option>January</option><option>February</option><option>March</option>
+    <option>April</option><option>May</option><option>June</option>
+    <option>July</option><option>August</option><option>September</option>
+    <option>October</option><option>November</option><option>December</option>
+  </select>
+
+  <label>Target Amount:</label>
+  <input type="number" id="target" placeholder="Enter target">
+
+  <label>Sales Amount:</label>
+  <input type="number" id="sales" placeholder="Enter actual sales">
+
+  <button onclick="calculateCommission()">Generate Receipt</button>
+
+  <div class="receipt" id="receipt" style="display:none;"></div>
+  <button id="printBtn" class="print-btn" style="display:none;" onclick="printReceipt()">Print Receipt</button>
+</div>
+
+<script>
+  function calculateCommission() {
+    const name = document.getElementById('name').value.trim();
+    const dept = document.getElementById('department').value.trim();
+    const month = document.getElementById('month').value;
+    const target = parseFloat(document.getElementById('target').value);
+    const sales = parseFloat(document.getElementById('sales').value);
+    let commission = 0;
+
+    if (!name || !dept || !target || !sales) {
+      alert("Please fill in all fields before generating the receipt.");
+      return;
+    }
+
+    if (sales >= target) {
+      commission = sales * 0.10;
+    } else if (sales >= target * 0.8) {
+      commission = sales * 0.05;
+    } else {
+      commission = 0;
+    }
+
+    const percentage = ((sales / target) * 100).toFixed(2);
+    const date = new Date().toLocaleDateString();
+
+    const receiptHTML = `
+      <h3>Commission Receipt</h3>
+      <p><strong>Company:</strong> Errimat Industries Ltd</p>
+      <p><strong>Date:</strong> ${date}</p>
+      <hr>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Department:</strong> ${dept}</p>
+      <p><strong>Month:</strong> ${month}</p>
+      <p><strong>Target:</strong> UGX ${target.toLocaleString()}</p>
+      <p><strong>Sales:</strong> UGX ${sales.toLocaleString()}</p>
+      <p><strong>Target Achieved:</strong> ${percentage}%</p>
+      <p><strong>Commission:</strong> UGX ${commission.toLocaleString()}</p>
+      <hr>
+      <p style="text-align:center; margin-top:10px;">Thank you for your effort!</p>
+    `;
+
+    const receiptDiv = document.getElementById('receipt');
+    receiptDiv.innerHTML = receiptHTML;
+    receiptDiv.style.display = 'block';
+
+    document.getElementById('printBtn').style.display = 'block';
+  }
+
+  function printReceipt() {
+    window.print();
+  }
+</script>
+
+</body>
+</html>
