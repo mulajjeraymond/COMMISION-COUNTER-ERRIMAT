@@ -9,15 +9,16 @@
       background-color: #f4f6f8;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      align-items: flex-start;
+      padding: 30px;
     }
     .container {
       background: white;
       padding: 30px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 420px;
+      width: 440px;
+      margin-right: 40px;
     }
     h2 {
       text-align: center;
@@ -56,27 +57,33 @@
       border-radius: 8px;
       background: #fafafa;
     }
-    .receipt h3 {
-      text-align: center;
-      color: #004080;
-    }
-    .receipt p {
-      margin: 5px 0;
-    }
     .print-btn {
       background: #008000;
       margin-top: 10px;
     }
-    .print-btn:hover {
-      background: #006400;
+    .refresh-btn {
+      background: #e63946;
+    }
+    .print-btn:hover { background: #006400; }
+    .refresh-btn:hover { background: #c71d1d; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #004080;
+      color: white;
     }
     @media print {
-      body * {
-        visibility: hidden;
-      }
-      .receipt, .receipt * {
-        visibility: visible;
-      }
+      body * { visibility: hidden; }
+      .receipt, .receipt * { visibility: visible; }
       .receipt {
         position: absolute;
         left: 0;
@@ -111,62 +118,111 @@
   <input type="number" id="sales" placeholder="Enter actual sales">
 
   <button onclick="calculateCommission()">Generate Receipt</button>
+  <button id="refreshBtn" class="refresh-btn" onclick="refreshForm()">Clear Form</button>
 
   <div class="receipt" id="receipt" style="display:none;"></div>
   <button id="printBtn" class="print-btn" style="display:none;" onclick="printReceipt()">Print Receipt</button>
 </div>
 
+<div class="container" style="width:600px;">
+  <h2>Commission Summary</h2>
+  <table id="summaryTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Month</th>
+        <th>Sales (UGX)</th>
+        <th>Target (UGX)</th>
+        <th>Commission (UGX)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
 <script>
-  function calculateCommission() {
-    const name = document.getElementById('name').value.trim();
-    const dept = document.getElementById('department').value.trim();
-    const month = document.getElementById('month').value;
-    const target = parseFloat(document.getElementById('target').value);
-    const sales = parseFloat(document.getElementById('sales').value);
-    let commission = 0;
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzB0mTPo0gLTw2rOAVlemD_a7LKa1UCfJNgHiZqpu8mKoct7GXV9qr_5k1cW6UHhXYV/exec"; 
 
-    if (!name || !dept || !target || !sales) {
-      alert("Please fill in all fields before generating the receipt.");
-      return;
-    }
+function calculateCommission() {
+  const name = document.getElementById('name').value.trim();
+  const dept = document.getElementById('department').value.trim();
+  const month = document.getElementById('month').value;
+  const target = parseFloat(document.getElementById('target').value);
+  const sales = parseFloat(document.getElementById('sales').value);
 
-    if (sales >= target) {
-      commission = sales * 0.10;
-    } else if (sales >= target * 0.8) {
-      commission = sales * 0.05;
-    } else {
-      commission = 0;
-    }
-
-    const percentage = ((sales / target) * 100).toFixed(2);
-    const date = new Date().toLocaleDateString();
-
-    const receiptHTML = `
-      <h3>Commission Receipt</h3>
-      <p><strong>Company:</strong> Errimat Industries Ltd</p>
-      <p><strong>Date:</strong> ${date}</p>
-      <hr>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Department:</strong> ${dept}</p>
-      <p><strong>Month:</strong> ${month}</p>
-      <p><strong>Target:</strong> UGX ${target.toLocaleString()}</p>
-      <p><strong>Sales:</strong> UGX ${sales.toLocaleString()}</p>
-      <p><strong>Target Achieved:</strong> ${percentage}%</p>
-      <p><strong>Commission:</strong> UGX ${commission.toLocaleString()}</p>
-      <hr>
-      <p style="text-align:center; margin-top:10px;">Thank you for your effort!</p>
-    `;
-
-    const receiptDiv = document.getElementById('receipt');
-    receiptDiv.innerHTML = receiptHTML;
-    receiptDiv.style.display = 'block';
-
-    document.getElementById('printBtn').style.display = 'block';
+  if (!name || !dept || !target || !sales) {
+    alert("Please fill in all fields before generating the receipt.");
+    return;
   }
 
-  function printReceipt() {
-    window.print();
-  }
+  // Commission logic: 0.01% per target rate
+  let rate = (sales / target) * 0.01;
+  let commission = sales * rate;
+
+  const percentage = ((sales / target) * 100).toFixed(2);
+  const date = new Date().toLocaleDateString();
+
+  const receiptHTML = `
+    <h3>Commission Receipt</h3>
+    <p><strong>Company:</strong> Errimat Industries Ltd</p>
+    <p><strong>Date:</strong> ${date}</p>
+    <hr>
+    <p><strong>Name:</strong> ${name}</p>
+    <p><strong>Department:</strong> ${dept}</p>
+    <p><strong>Month:</strong> ${month}</p>
+    <p><strong>Target:</strong> UGX ${target.toLocaleString()}</p>
+    <p><strong>Sales:</strong> UGX ${sales.toLocaleString()}</p>
+    <p><strong>Target Achieved:</strong> ${percentage}%</p>
+    <p><strong>Commission:</strong> UGX ${commission.toLocaleString()}</p>
+    <hr>
+    <p style="text-align:center;">Thank you for your effort!</p>
+  `;
+
+  const receiptDiv = document.getElementById('receipt');
+  receiptDiv.innerHTML = receiptHTML;
+  receiptDiv.style.display = 'block';
+  document.getElementById('printBtn').style.display = 'block';
+
+  // Show in summary table
+  const tbody = document.querySelector('#summaryTable tbody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${date}</td>
+    <td>${name}</td>
+    <td>${dept}</td>
+    <td>${month}</td>
+    <td>${sales.toLocaleString()}</td>
+    <td>${target.toLocaleString()}</td>
+    <td>${commission.toLocaleString()}</td>
+  `;
+  tbody.appendChild(row);
+
+  // Send data to Google Sheets
+  const record = { name, department: dept, month, sales, target, commission };
+  fetch(GOOGLE_SHEET_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(record)
+  })
+  .then(() => console.log("Data sent to Google Sheets"))
+  .catch(err => console.error("Error:", err));
+}
+
+function printReceipt() {
+  window.print();
+}
+
+function refreshForm() {
+  document.getElementById('name').value = '';
+  document.getElementById('department').value = '';
+  document.getElementById('target').value = '';
+  document.getElementById('sales').value = '';
+  document.getElementById('receipt').style.display = 'none';
+  document.getElementById('printBtn').style.display = 'none';
+}
 </script>
 
 </body>
